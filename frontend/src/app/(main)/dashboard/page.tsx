@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi, type RecentDocument } from '@/lib/api/dashboard';
-import { FileText, Upload, FolderOpen, GitPullRequest } from 'lucide-react';
+import { workflowApi } from '@/lib/api/workflow';
+import { aiApi } from '@/lib/api/ai';
+import { FileText, Upload, FolderOpen, GitPullRequest, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -32,6 +34,18 @@ export default function DashboardPage() {
     refetchInterval: 30000,
   });
 
+  const { data: workflowCounts } = useQuery({
+    queryKey: ['workflow-counts'],
+    queryFn: () => workflowApi.getCounts(),
+    select: (res) => res.data.data,
+  });
+
+  const { data: aiStatus } = useQuery({
+    queryKey: ['ai-status'],
+    queryFn: () => aiApi.getAiStatus(),
+    select: (res) => res.data.data,
+  });
+
   const stats = [
     {
       label: '전체 문서',
@@ -53,7 +67,7 @@ export default function DashboardPage() {
     },
     {
       label: '대기 중 결재',
-      value: 0,
+      value: workflowCounts?.pendingApprovals ?? 0,
       icon: GitPullRequest,
       color: 'text-orange-600 bg-orange-50',
     },
@@ -117,6 +131,36 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* AI 처리 현황 */}
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            <span className="flex items-center gap-2">
+              <Bot size={20} className="text-purple-600" />
+              AI 처리 현황
+            </span>
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md bg-yellow-50 p-3 text-center">
+              <p className="text-2xl font-bold text-yellow-700">{aiStatus?.pending ?? 0}</p>
+              <p className="text-xs text-yellow-600">대기</p>
+            </div>
+            <div className="rounded-md bg-blue-50 p-3 text-center">
+              <p className="text-2xl font-bold text-blue-700">{aiStatus?.processing ?? 0}</p>
+              <p className="text-xs text-blue-600">처리중</p>
+            </div>
+            <div className="rounded-md bg-green-50 p-3 text-center">
+              <p className="text-2xl font-bold text-green-700">{aiStatus?.completed ?? 0}</p>
+              <p className="text-xs text-green-600">완료</p>
+            </div>
+            <div className="rounded-md bg-red-50 p-3 text-center">
+              <p className="text-2xl font-bold text-red-700">{aiStatus?.failed ?? 0}</p>
+              <p className="text-xs text-red-600">실패</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 문서 유형별 현황 */}
         <div className="rounded-lg border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">문서 유형별 현황</h2>
@@ -132,6 +176,29 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-gray-500">데이터가 없습니다.</p>
           )}
+        </div>
+
+        {/* 결재 현황 */}
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">결재 현황</h2>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between rounded-md bg-yellow-50 px-3 py-2">
+              <span className="text-sm text-gray-700">대기 중 결재</span>
+              <span className="text-sm font-semibold text-yellow-700">{workflowCounts?.pendingApprovals ?? 0}건</span>
+            </div>
+            <div className="flex items-center justify-between rounded-md bg-blue-50 px-3 py-2">
+              <span className="text-sm text-gray-700">내 결재 요청</span>
+              <span className="text-sm font-semibold text-blue-700">{workflowCounts?.myRequests ?? 0}건</span>
+            </div>
+            <div className="flex items-center justify-between rounded-md bg-green-50 px-3 py-2">
+              <span className="text-sm text-gray-700">승인됨</span>
+              <span className="text-sm font-semibold text-green-700">{workflowCounts?.approved ?? 0}건</span>
+            </div>
+            <div className="flex items-center justify-between rounded-md bg-red-50 px-3 py-2">
+              <span className="text-sm text-gray-700">반려됨</span>
+              <span className="text-sm font-semibold text-red-700">{workflowCounts?.rejected ?? 0}건</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

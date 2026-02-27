@@ -18,5 +18,39 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: edms-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/edms?currentSchema=edms
+      SPRING_DATASOURCE_USERNAME: edms
+      SPRING_DATASOURCE_PASSWORD: edms1234
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: edms-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8080/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   edms-pgdata:
