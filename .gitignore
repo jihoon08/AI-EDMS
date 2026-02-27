@@ -1,0 +1,35 @@
+# Backend
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.idea/
+backend/*.iml
+backend/logs/
+backend/*.log
+backend/storage/
+backend/test-storage/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+frontend/.vercel
+
+# 공통
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+logs/
+*.log
+tmp/
+*.tmp
+.mcp.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

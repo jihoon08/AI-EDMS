@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/edms
+    username: edms
+    password: edms1234
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    com.edms: DEBUG
+    org.hibernate.SQL: DEBUG
+
+app:
+  datasource:
+    routing:
+      enabled: false
+  storage:
+    type: local
+    local:
+      base-path: ./storage
