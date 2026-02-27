@@ -42,13 +42,17 @@ const api = axios.create({
 // 요청 인터셉터
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const userUuid = localStorage.getItem('userUuid');
-    const userEmail = localStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName');
+    // JWT 토큰이 있으면 Authorization 헤더 사용
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
 
-    if (userUuid) config.headers['X-User-UUID'] = userUuid;
-    if (userEmail) config.headers['X-User-Email'] = userEmail;
-    if (userName) config.headers['X-User-Name'] = userName;
+    // JWT가 없을 때 fallback: X-User-UUID 헤더
+    const userUuid = localStorage.getItem('userUuid');
+    if (!accessToken && userUuid) {
+      config.headers['X-User-UUID'] = userUuid;
+    }
   }
 
   config.headers['Accept-Language'] = 'ko';

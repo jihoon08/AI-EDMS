@@ -1,24 +1,23 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { authApi } from '@/lib/api/auth';
 
 const TEST_USERS = [
   {
-    uuid: '00000000-0000-0000-0000-000000000001',
     email: 'admin@edms.dev',
     name: '관리자',
     role: 'ADMIN',
     department: '시스템',
   },
   {
-    uuid: '00000000-0000-0000-0000-000000000002',
     email: 'user1@edms.dev',
     name: '김철수',
     role: 'USER',
     department: '개발팀',
   },
   {
-    uuid: '00000000-0000-0000-0000-000000000003',
     email: 'user2@edms.dev',
     name: '이영희',
     role: 'USER',
@@ -28,15 +27,30 @@ const TEST_USERS = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (user: typeof TEST_USERS[0]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userUuid', user.uuid);
-      localStorage.setItem('userEmail', user.email);
+  const handleLogin = async (email: string) => {
+    setLoading(email);
+    setError(null);
+    try {
+      const res = await authApi.login(email);
+      const { accessToken, refreshToken, user } = res.data.data;
+
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userUuid', user.userUuid);
       localStorage.setItem('userName', user.name);
-      localStorage.setItem('userRole', user.role);
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userRoles', JSON.stringify(user.roles));
+      localStorage.setItem('userPermissions', JSON.stringify(user.permissions));
+
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '로그인 실패');
+    } finally {
+      setLoading(null);
     }
-    router.push('/dashboard');
   };
 
   return (
@@ -49,23 +63,33 @@ export default function LoginPage() {
           전자문서관리시스템
         </p>
 
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         <div className="space-y-3">
           <p className="text-xs font-medium text-gray-500">테스트 사용자 선택</p>
           {TEST_USERS.map((user) => (
             <button
-              key={user.uuid}
-              onClick={() => handleLogin(user)}
-              className="flex w-full items-center gap-4 rounded-md border px-4 py-3 text-left hover:bg-blue-50 hover:border-blue-300"
+              key={user.email}
+              onClick={() => handleLogin(user.email)}
+              disabled={loading !== null}
+              className="flex w-full items-center gap-4 rounded-md border px-4 py-3 text-left hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                 {user.name[0]}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
                 <p className="text-xs text-gray-500">
                   {user.department} / {user.role}
                 </p>
               </div>
+              {loading === user.email && (
+                <span className="text-xs text-blue-600">로그인 중...</span>
+              )}
             </button>
           ))}
         </div>
